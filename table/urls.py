@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
-from django.conf.urls import url
-
+from django.urls import path
 from table.views import FeedDataView
 
+app_name = 'datatable'
 
 urlpatterns = [
-    url(r'^ajax/(?P<token>\w{32})/$', FeedDataView.as_view(), name='feed_data'),
+    path('ajax/<str:token>/', FeedDataView.as_view(), name='feed_data'),
 ]

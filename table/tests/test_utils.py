@@ -32,4 +32,4 @@ class AccessorTestCase(TestCase):
         a1.save()
         a1.publications.add(p1)
 
-        self.assertEqual(Accessor('article_set.count').resolve(p1), 1)
+        self.assertEqual(Accessor('article_set.count').resolve(p1), '1')

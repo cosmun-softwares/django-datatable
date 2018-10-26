@@ -4,10 +4,12 @@ from __future__ import unicode_literals
 import json
 import django
 
-from django.test import Client, TestCase
+from django.test import TestCase
 
-if django.VERSION >= (1, 10):
+if django.VERSION >= (1, 10) and django.VERSION < (2, 1):
     from django.urls import reverse
+if django.VERSION >= (2, 1):
+    from django.urls import reverse_lazy as reverse
 else:
     from django.core.urlresolvers import reverse
 
@@ -29,8 +31,7 @@ class TestTable(Table):
 class FeedDataViewTestCase(TestCase):
     def setUp(self):
         self.table = TestTable()
-        self.client = Client()
-        self.url = reverse("feed_data", args=(self.table.token,))
+        self.url = reverse("datatable:feed_data", args=(self.table.token,))
         self.payload = {
             "sEcho": "1",
             "iColumns": 2,

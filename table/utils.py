@@ -1,57 +1,78 @@
 #!/usr/bin/env python
 # coding: utf-8
 import time
+import datetime
 
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 
-class Accessor(str):
+class Accessor(object):
     """ A string describing a path from one object to another via attribute/index
         accesses. For convenience, the class has an alias `.A` to allow for more concise code.
 
         Relations are separated by a "." character.
     """
     SEPARATOR = '.'
+    TYPES_DEFAULT = (int, str, datetime.datetime, datetime.date, datetime.time)
 
-    def resolve(self, context, quiet=True):
+    def __init__(self, fields=None):
+        if isinstance(fields, str):
+            fields = [fields]
+        self.fields = fields or []
+
+    def resolve(self, context, delimiter=' ', quiet=False):
         """
-        Return an object described by the accessor by traversing the attributes
-        of context.
-
+        Return an object described by the accessor by traversing the attributes of context.
         """
         try:
-            obj = context
-            for level in self.levels:
-                if isinstance(obj, dict):
-                    obj = obj[level]
-                elif isinstance(obj, list) or isinstance(obj, tuple):
-                    obj = obj[int(level)]
+            self.obj = context
+            texts = []
+            for field in self.fields:
+                if '.' in field:
+                    value = self.mont_list(field.split(self.SEPARATOR), self.obj)
                 else:
-                    if callable(getattr(obj, level)):
-                        try:
-                            obj = getattr(obj, level)()
-                        except KeyError:
-                            obj = getattr(obj, level)
-                    else:
-                        # for model field that has choice set
-                        # use get_xxx_display to access
-                        display = 'get_%s_display' % level
-                        obj = getattr(obj, display)() if hasattr(obj, display) else getattr(obj, level)
-                if not obj:
-                    break
-            return obj
+                    value = self.get_value(field, self.obj)
+
+                if value and isinstance(value, self.TYPES_DEFAULT):
+                    texts.append(str(value))
+                elif value:
+                    return value
+            return delimiter.join(texts)
+
         except Exception as e:
             if quiet:
                 return ''
             else:
                 raise e
 
-    @property
-    def levels(self):
-        if self == '':
-            return ()
-        return self.split(self.SEPARATOR)
+    def mont_list(self, levels, obj):
+        for level in levels:
+            obj = self.get_value(level, obj)
+            if not obj:
+                break
+        return obj
+
+
+    def get_value(self, level, obj):
+        if isinstance(obj, dict):
+            obj = obj.get(level)
+        elif isinstance(obj, list) or isinstance(obj, tuple):
+            obj = obj[int(level)]
+        else:
+            if callable(getattr(obj, level)):
+                try:
+                    obj = getattr(obj, level)()
+                except Exception:
+                    obj = getattr(obj, level)
+            else:
+                # for model field that has choice set
+                # use get_xxx_display to access
+                display = 'get_%s_display' % level
+                obj = getattr(obj, display)() if hasattr(obj, display) else getattr(obj, level)
+
+        return obj
+
 
 A = Accessor
 

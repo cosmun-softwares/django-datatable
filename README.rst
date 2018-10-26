@@ -25,11 +25,11 @@ Requirements
 
 -  Python 2.x
 
--  jQuery 1.6+
+-  jQuery 3+
 
--  Django 1.5+
+-  Django 2+
 
--  Bootstrap 3.0
+-  Bootstrap 4.0
 
 Quick start
 -----------
@@ -213,9 +213,10 @@ Django-table will do paging/searching/sorting based on
     Urls:
 
         # urls.py
-        urlpatterns = patterns('',
-            url(r'^table/', include(table.urls')),
-        )
+        urlpatterns = [
+            ....
+            path('datatable/', include('table.urls', namespace='datatable')),
+        ]
 
     Tables:
 
@@ -254,9 +255,10 @@ implement your own Class-based View by subclassing ``FeedDataView``.
     Urls:
 
         # urls.py
-        urlpatterns = patterns('',
-            url(r'^table/data/$', MyDataView.as_view(), name='table_data'),
-        )
+        urlpatterns = [
+            ....
+            path('datatable/data/', MyDataView.as_view(), name='table_data'),
+        ]
 
     Views:
 

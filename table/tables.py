@@ -9,7 +9,6 @@ from django.db.models.query import QuerySet
 from django.utils.safestring import mark_safe
 
 from table.columns import Column, BoundColumn, SequenceColumn
-from table.widgets import SearchBox, InfoLabel, Pagination, LengthMenu
 
 
 class BaseTable(object):
@@ -19,8 +18,9 @@ class BaseTable(object):
 
         # Make a copy so that modifying this will not touch the class definition.
         self.columns = copy.deepcopy(self.base_columns)
-        # Build table add-ons
-        self.addons = TableWidgets(self)
+
+        # SET QUERYSET
+        TableDataMap.register(self.token, self.opts.model, self.columns, self.data.data)
 
     @property
     def rows(self):
@@ -88,9 +88,8 @@ class TableDataMap(object):
     map = {}
 
     @classmethod
-    def register(cls, token, model, columns):
-        if token not in TableDataMap.map:
-            TableDataMap.map[token] = (model, columns)
+    def register(cls, token, model, columns, data=None):
+        TableDataMap.map[token] = (model, columns, data)
 
     @classmethod
     def get_model(cls, token):
@@ -100,28 +99,9 @@ class TableDataMap(object):
     def get_columns(cls, token):
         return TableDataMap.map.get(token)[1]
 
-
-class TableWidgets(object):
-    def __init__(self, table):
-        opts = table.opts
-        self.search_box = SearchBox(opts.search, opts.search_placeholder)
-        self.length_menu = LengthMenu(opts.length_menu)
-        self.info_label = InfoLabel(opts.info, opts.info_format)
-        self.pagination = Pagination(opts.pagination,
-                                     opts.page_length,
-                                     opts.pagination_first,
-                                     opts.pagination_last,
-                                     opts.pagination_prev,
-                                     opts.pagination_next)
-
-    def render_dom(self):
-        dom = ''
-        if self.search_box.visible:
-            dom += "<'row'<'col-sm-9 col-md-9 col-lg-9'>" + self.search_box.dom + ">"
-        dom += "rt"
-        if self.info_label.visible or self.pagination.visible or self.length_menu.visible:
-            dom += "<'row'" + ''.join([self.info_label.dom, self.pagination.dom, self.length_menu.dom]) + ">"
-        return mark_safe(dom)
+    @classmethod
+    def get_queryset(cls, token):
+        return TableDataMap.map.get(token)[2]
 
 
 class TableOptions(object):
@@ -184,8 +164,8 @@ class TableOptions(object):
 
         self.zero_records = getattr(options, 'zero_records', u'No records')
         self.template_name = getattr(options, 'template_name', None)
-        self.theme_css_file = getattr(options, 'theme_css_file', 'table/css/datatable.bootstrap.css')
-        self.theme_js_file = getattr(options, 'theme_js_file', 'table/js/bootstrap.dataTables.js')
+        self.theme_css_file = getattr(options, 'theme_css_file', 'table/css/custom.css')
+        self.theme_js_file = getattr(options, 'theme_js_file', 'table/js/custom.js')
 
 
 class TableMetaClass(type):

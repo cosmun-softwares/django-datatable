@@ -25,8 +25,8 @@ class BaseTableTestCase(TestCase):
     def test_rows(self):
         first_row = self.table.rows[0].values()
         second_row = self.table.rows[1].values()
-        self.assertEqual(first_row, ['1', 'a'])
-        self.assertEqual(second_row, ['2', 'b'])
+        self.assertEqual(list(first_row), ['1', 'a'])
+        self.assertEqual(list(second_row), ['2', 'b'])
 
     def test_header_rows(self):
         first_header_row = [header.text for header in self.table.header_rows[0]]

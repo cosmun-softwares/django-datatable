@@ -53,10 +53,14 @@ class FeedDataView(JSONResponseMixin, BaseListView):
         return BaseListView.get(self, request, *args, **kwargs)
 
     def get_queryset(self):
-        model = TableDataMap.get_model(self.token)
-        if model is None:
-            return None
-        return model.objects.all()
+        queryset = TableDataMap.get_queryset(self.token)
+        if not queryset is None:
+            return queryset
+        else:
+            model = TableDataMap.get_model(self.token)
+            if model is None:
+                return None
+            return model.objects.all()
 
     def filter_queryset(self, queryset):
         def get_filter_arguments(filter_target):
@@ -66,9 +70,13 @@ class FeedDataView(JSONResponseMixin, BaseListView):
             queries = []
             fields = [col.field for col in self.columns if col.searchable]
             for field in fields:
-                key = "__".join(field.split(".") + ["icontains"])
-                value = filter_target
-                queries.append(Q(**{key: value}))
+                if isinstance(field, list):
+                    for value in field:
+                        key = "__".join(value.split(".") + ["icontains"])
+                        queries.append(Q(**{key: filter_target}))
+                else:
+                    key = "__".join(field.split(".") + ["icontains"])
+                    queries.append(Q(**{key: filter_target}))
             return reduce(lambda x, y: x | y, queries)
 
         filter_text = self.query_data["sSearch"]

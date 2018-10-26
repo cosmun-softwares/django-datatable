@@ -48,9 +48,12 @@ class LinkColumnTestCase(TestCase):
 
     def test_imagelink(self):
         image_link = ImageLink(image="test.jpg", image_title="foo")
-        self.assertEqual(image_link.render({}), '<a ><img src="/static/test.jpg" title="foo"></a>')
-        image_link = ImageLink(image="test.jpg", image_title=A("foo"))
-        self.assertEqual(image_link.render({"foo": "bar"}), '<a ><img src="/static/test.jpg" title="bar"></a>')
+        self.assertEqual(
+            image_link.render({}),
+            '<a href="test.jpg"><img title="foo" src="test.jpg"></a>'
+        )
+        image_link = ImageLink(image="test.jpg", image_title="bar")
+        self.assertEqual(image_link.render({"foo": "bar"}), '<a href="test.jpg"><img title="bar" src="test.jpg"></a>')
 
 
 class SequenceColumnTestCase(TestCase):
@@ -121,7 +124,7 @@ class WeeksColumnTestCase(TestCase):
 
 class MonthsColumnTestCase(TestCase):
     def test_length(self):
-        column1 = MonthsColumn(None, date(2012, 12, 18), date(2013, 07, 01))
+        column1 = MonthsColumn(None, date(2012, 12, 18), date(2013, 7, 1))
         self.assertEqual(len(column1), 8)
         column2 = MonthsColumn(None, date(2012, 12, 18), date(2012, 12, 19))
         self.assertEqual(len(column2), 1)
@@ -137,7 +140,7 @@ class MonthsColumnTestCase(TestCase):
 
 class CalendarColumnTestCase(TestCase):
     def test_inline_month_columns(self):
-        column = CalendarColumn(None, date(2012, 12, 18), date(2013, 03, 01))
+        column = CalendarColumn(None, date(2012, 12, 18), date(2013, 3, 1))
         self.assertEqual(len(column), 4 + 74 + 74)
         self.assertEqual(column.months_column.headers, ['December', 'January', 'February', 'March'])
         self.assertEqual(column.months_column[0].header.base_attrs['colspan'], '14')

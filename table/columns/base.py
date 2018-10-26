@@ -11,9 +11,8 @@ class Column(object):
 
     instance_order = 0
 
-    def __init__(self, field=None, header=None, attrs=None, header_attrs=None,
-                 header_row_order=0, sortable=True, searchable=True, safe=True,
-                 visible=True, space=True):
+    def __init__(self, field=None, header=None, attrs=None, header_attrs=None, header_row_order=0, sortable=True,
+                 searchable=True, safe=True, visible=True, space=True, default='', delimiter=' '):
         self.field = field
         self.attrs = attrs or {}
         self.sortable = sortable
@@ -21,6 +20,8 @@ class Column(object):
         self.safe = safe
         self.visible = visible
         self.space = space
+        self.default = default
+        self.delimiter = delimiter
         self.header = ColumnHeader(header, header_attrs, header_row_order)
 
         self.instance_order = Column.instance_order
@@ -30,8 +31,8 @@ class Column(object):
         return self.header.text
 
     def render(self, obj):
-        text = Accessor(self.field).resolve(obj)
-        return escape(text)
+        text = Accessor(self.field).resolve(obj, self.delimiter)
+        return escape(text) if text else self.default
 
 
 class BoundColumn(object):
