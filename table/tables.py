@@ -112,6 +112,7 @@ class TableOptions(object):
         self.ajax = getattr(options, 'ajax', False)
         self.ajax_source = getattr(options, 'ajax_source', None)
 
+
         # id attribute of <table> tag
         self.id = getattr(options, 'id', None)
 
@@ -166,6 +167,10 @@ class TableOptions(object):
         self.template_name = getattr(options, 'template_name', None)
         self.theme_css_file = getattr(options, 'theme_css_file', 'table/css/custom.css')
         self.theme_js_file = getattr(options, 'theme_js_file', 'table/js/custom.js')
+
+        # EXPORT
+        self.export = getattr(options, 'export', False)
+        self.buttons = getattr(options, 'buttons', [])
 
 
 class TableMetaClass(type):

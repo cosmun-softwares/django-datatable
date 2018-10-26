@@ -2,8 +2,11 @@
   {% load static %}
 
   {% block css %}
-    <link href="{% static 'table/plugins/datatables/dataTables.bootstrap4.css' %}" rel="stylesheet">
+    <link href="{% static 'table/plugins/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
     <link href="{% static table.opts.theme_css_file  %}" rel="stylesheet" media="screen">
+    {% if table.opts.export %}
+      <link href="//cdn.datatables.net/buttons/1.5.2/css/buttons.dataTables.min.css" rel="stylesheet" media="screen">
+    {% endif %}
   {% endblock css %}
   {% block extra_css %}{% endblock extra_css %}
 
@@ -24,7 +27,7 @@
         {% for row in table.rows %}
           <tr>
             {% for column, td in row.items %}
-              <td {% if column.attrs %}{{ column.attrs }}{% endif %}>{% if column.safe %}{{ td|default:column.default }}{% else %}{{ td|safe }}{% endif %}</td>
+              <td {% if column.attrs %}{{ column.attrs }}{% endif %}>{% if column.safe %}{{ td }}{% else %}{{ td|safe }}{% endif %}</td>
             {% endfor %}
           </tr>
         {% endfor %}
@@ -33,9 +36,18 @@
   </table>
 
   {% block js %}
-    <script src="{% static 'table/plugins/datatables/jquery.dataTables.js' %}"></script>
-    <script src="{% static 'table/plugins/datatables/dataTables.bootstrap4.js' %}"></script>
+    <script src="{% static 'table/plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'table/plugins/datatables/dataTables.bootstrap4.min.js' %}"></script>
     <script src="{% static table.opts.theme_js_file %}" type="text/javascript"></script>
+    {% if table.opts.export %}
+      <script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.bootstrap4.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+      <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+    {% endif %}
   {% endblock js %}
   {% block extra_js %}{% endblock extra_js %}
 
@@ -48,6 +60,16 @@
 
       var table = $('#{{ table.opts.id }}').DataTable({
         {% block table_options %}
+          {% if table.opts.export %}
+            "dom": "<'row'<'col-sm-12 col-md-3' l><'col-sm-12 col-md-5 text-center' B><'col-sm-12 col-md-4' f>>rt<'row'<'col-sm-12 col-md-6' i><'col-sm-12 col-md-6' p>>",
+            {% if table.opts.buttons %}
+              "buttons": [
+                {% for button in table.opts.buttons %}
+                  '{{ button }}',
+                {% endfor %}
+              ],
+            {% endif %}
+          {% endif %}
           {% if table.opts.ajax %}
             "processing": true,
             "serverSide": true,
