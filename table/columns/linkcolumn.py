@@ -18,12 +18,12 @@ from table.columns.base import Column
 
 
 class LinkColumn(Column):
-    def __init__(self, header=None, links=None, delimiter='&nbsp', field=None, **kwargs):
+    def __init__(self, header=None, links=None, delimiter='&nbsp', default=None, field=None, **kwargs):
         self.links = links
         self.delimiter = delimiter
         kwargs['safe'] = False
         kwargs["searchable"] = False
-        super(LinkColumn, self).__init__(field, header, **kwargs)
+        super(LinkColumn, self).__init__(field, header, default=default, **kwargs)
 
     def render(self, obj):
         return self.delimiter.join([link.render(obj) for link in self.links])
