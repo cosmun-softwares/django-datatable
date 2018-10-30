@@ -3,7 +3,7 @@
 from django.utils.html import escape
 from django.template import Template, Context
 
-from table.utils import Accessor, AttributesDict
+from table.utils import Accessor, AttributesDict, load_class
 
 
 class Column(object):
@@ -13,7 +13,7 @@ class Column(object):
     instance_order = 0
 
     def __init__(self, field=None, header=None, attrs=None, header_attrs=None, header_row_order=0, sortable=True,
-                 searchable=True, safe=True, visible=True, space=True, default='', delimiter=' ', text=None):
+                 searchable=True, safe=True, visible=True, space=True, default='', delimiter=' ', filter_tag=None):
         self.field = field
         self.attrs = attrs or {}
         self.sortable = sortable
@@ -23,7 +23,7 @@ class Column(object):
         self.space = space
         self.default = default
         self.delimiter = delimiter
-        self.base_text = text
+        self.filter_tag = filter_tag
         self.header = ColumnHeader(header, header_attrs, header_row_order)
 
         self.instance_order = Column.instance_order
@@ -34,11 +34,12 @@ class Column(object):
 
     @property
     def text(self):
-        if isinstance(self.base_text, Accessor):
-            text = self.base_text.resolve(self.obj)
-        else:
-            text = Accessor(self.field).resolve(self.obj, self.delimiter)
-            text = escape(text)
+        text = Accessor(self.field).resolve(self.obj, self.delimiter)
+        text = escape(text)
+
+        if self.filter_tag:
+            method = load_class(self.filter_tag)
+            text = method(text)
 
         return text
 
