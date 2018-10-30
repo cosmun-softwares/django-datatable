@@ -25,7 +25,7 @@ class LinkColumn(Column):
         kwargs["searchable"] = False
         super(LinkColumn, self).__init__(field, header, default=default, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         text = self.delimiter.join([link.render(obj) for link in self.links])
         return text if text else self.default
 
@@ -35,7 +35,7 @@ class Link(object):
     Represents a html <a> tag.
     """
     def __init__(self, text=None, viewname=None, args=None, kwargs=None, urlconf=None, current_app=None, attrs=None,
-                 cond_disable=None):
+                 disable=None, visible=None):
         self.basetext = text
         self.viewname = viewname
         self.args = args or []
@@ -43,9 +43,25 @@ class Link(object):
         self.urlconf = urlconf
         self.current_app = current_app
         self.base_attrs = attrs or {}
-        self.cond_disable = cond_disable or []
+        self.cond_disable = disable or []
+        self.cond_visible = visible or []
 
-    def visible(self, obj):
+    def visible(self, obj, user=None):
+        for cond in self.cond_visible:
+            field = cond[0]
+            if isinstance(field, Accessor):
+                field = field.resolve(self.obj)
+
+            if user and len(cond) == 3:
+                return user.has_perm(field)
+
+            if len(cond) > 1:
+                if isinstance(cond[1], bool):
+                    field = bool(field)
+                return field == cond[1]
+
+            return bool(field)
+
         return True
 
     @property
@@ -62,12 +78,6 @@ class Link(object):
             field = cond[0]
             if isinstance(field, Accessor):
                 field = field.resolve(self.obj)
-
-            if len(cond) == 3:
-                cond_html = '{% if '
-                if cond[1] == False:
-                    cond_html += 'not '
-                return cond_html+field+' %} disabled{% endif %}'
 
             if len(cond) > 1:
                 if isinstance(cond[1], bool):
@@ -119,7 +129,7 @@ class Link(object):
 
         return self.base_attrs
 
-    def render(self, obj, field=None):
+    def render(self, obj, field=None, user=None):
         """ Render link as HTML output tag <a>.
         """
         self.obj = obj

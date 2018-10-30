@@ -13,7 +13,7 @@ class CheckboxColumn(Column):
         kwargs["searchable"] = False
         super(CheckboxColumn, self).__init__(field=field, header=header, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         checked = bool(Accessor(self.field).resolve(obj)) if self.field else False
         if checked:
             return mark_safe('<input checked type="checkbox">')

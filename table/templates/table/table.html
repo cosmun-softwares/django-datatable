@@ -85,23 +85,25 @@
             {% for index, order in table.opts.sort %}
               [ {{ index }}, "{{ order }}" ],
             {% endfor %}
-           ],
-          "columns": [
-            {% for column in table.columns %}
-              {% if column.space %}
-                {
-                  {% if not column.searchable %}"searchable": false,{% endif %}
-                  {% if not column.sortable %}"orderable": false,{% endif %}
-                  {% if not column.visible %}"visible": false,{% endif %}
-                  {% if column.links %}
-                    "render": function(data, type, full) {
-                      return type == 'filter' ? $(data).text() : data
-                    }
-                  {% endif %}
-                },
-              {% endif %}
-            {% endfor %}
           ],
+          {% if not table.opts.ajax %}
+            "columns": [
+              {% for column in table.columns %}
+                {% if column.space %}
+                  {
+                    {% if not column.searchable %}"searchable": false,{% endif %}
+                    {% if not column.sortable %}"orderable": false,{% endif %}
+                    {% if not column.visible %}"visible": false,{% endif %}
+                    {% if column.links %}
+                      "render": function(data, type, full) {
+                        return type == 'filter' ? $(data).text() : data
+                      }
+                    {% endif %}
+                  },
+                {% endif %}
+              {% endfor %}
+            ],
+          {% endif %}
         {% endblock table_options %}
         {% block table_extra_options %}{% endblock %}
       });

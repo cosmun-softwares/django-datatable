@@ -43,7 +43,7 @@ class Column(object):
 
         return text
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         self.obj = obj
         return self.text if self.text else self.default
 

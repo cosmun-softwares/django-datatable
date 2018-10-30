@@ -25,8 +25,11 @@ class ButtonColumn(Column):
         kwargs["searchable"] = False
         super(ButtonColumn, self).__init__(field, header, attrs, header_attrs, **kwargs)
 
-    def render(self, obj):
-        return self.delimiter.join([button.render(obj, self.field) for button in self.buttons if button.visible(obj)])
+    def render(self, obj, user=None):
+        return self.delimiter.join([
+            button.render(obj, field=self.field)
+            for button in self.buttons if button.visible(obj, user=user)
+        ])
 
 
 class Button(object):
@@ -34,7 +37,7 @@ class Button(object):
     Represents a html <button> tag.
     """
     def __init__(self, text=None, viewname=None, args=None, kwargs=None, urlconf=None, current_app=None, attrs=None,
-                 modal_target=None, onclick=None, cond_visible=None, cond_disable=None):
+                 modal_target=None, onclick=None, visible=None, disable=None):
         self.basetext = text
         self.viewname = viewname
         self.args = args or []
@@ -44,14 +47,24 @@ class Button(object):
         self.base_attrs = attrs or {}
         self.modal_target = modal_target
         self.onclick = onclick
-        self.cond_visible = cond_visible or []
-        self.cond_disable = cond_disable or []
+        self.cond_visible = visible or []
+        self.cond_disable = disable or []
 
-    def visible(self, obj):
+    def visible(self, obj, user=None):
         for cond in self.cond_visible:
             field = cond[0]
             if isinstance(field, Accessor):
                 field = field.resolve(obj)
+
+            if user and len(cond) == 3:
+                if cond[2] == 'perm':
+                    if cond[2] is False:
+                        return not user.has_perm(field)
+                    return user.has_perm(field)
+                elif cond[2] == 'user':
+                    if cond[2] is False:
+                        return not getattr(user, cond[1]) == cond[2]
+                    return getattr(user, cond[1]) == cond[2]
 
             if len(cond) > 1:
                 if isinstance(cond[1], bool):
@@ -129,7 +142,7 @@ class Button(object):
         return self.base_attrs
 
 
-    def render(self, obj, field=None):
+    def render(self, obj, field=None, user=None):
         """ Render link as HTML output tag <button>.
         """
         self.obj = obj

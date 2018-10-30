@@ -12,7 +12,7 @@ class BoolColumn(Column):
         kwargs["searchable"] = False
         super(BoolColumn, self).__init__(field, header, *args, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         text = Accessor(self.field).resolve(obj)
         html = '<i class="fas '
         if text:

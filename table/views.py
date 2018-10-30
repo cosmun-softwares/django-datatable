@@ -117,7 +117,7 @@ class FeedDataView(JSONResponseMixin, BaseListView):
     def convert_queryset_to_values_list(self, queryset):
         # FIXME: unit test
         return [
-            [col.render(obj) for col in self.columns]
+            [col.render(obj, user=self.request.user) for col in self.columns]
             for obj in queryset
         ]
 

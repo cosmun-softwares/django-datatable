@@ -15,7 +15,7 @@ class DatetimeColumn(Column):
         self.format = format or self.DEFAULT_FORMAT
         super(DatetimeColumn, self).__init__(field, header, default=default, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         obj = Accessor(self.field).resolve(obj)
         if obj:
             if len(obj) > 11:
@@ -37,7 +37,7 @@ class DateColumn(DatetimeColumn):
         format = format or self.DEFAULT_FORMAT
         super(DateColumn, self).__init__(field, header, format, default=default, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         obj = Accessor(self.field).resolve(obj)
         if obj:
             obj = datetime.strptime(obj, self.DEFAULT_FORMAT).strftime(self.format)
@@ -52,7 +52,7 @@ class TimeColumn(DatetimeColumn):
         format = format or self.DEFAULT_FORMAT
         super(TimeColumn, self).__init__(field, header, format, default=default, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         obj = Accessor(self.field).resolve(obj)
         if obj:
             obj = datetime.strptime(obj, self.DEFAULT_FORMAT).strftime(self.format)

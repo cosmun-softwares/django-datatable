@@ -13,7 +13,7 @@ class ImageColumn(Column):
         self.image_title = image_title
         super(ImageColumn, self).__init__(field=field, *args, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         path = Accessor(self.field).resolve(obj)
         if isinstance(self.image_title, Accessor):
             title = self.image_title.resolve(self.obj)

@@ -18,7 +18,7 @@ class ImageSequenceColumn(Column):
         kwargs["searchable"] = False
         super(ImageSequenceColumn, self).__init__(field, header, attrs=attrs, **kwargs)
 
-    def render(self, obj):
+    def render(self, obj, user=None):
         html_images = ''.join([
             '<div class="'+self.class_col+'">'+ ImageLink(
                 field=self.field_url,
