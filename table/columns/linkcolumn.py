@@ -34,7 +34,8 @@ class Link(object):
     """
     Represents a html <a> tag.
     """
-    def __init__(self, text=None, viewname=None, args=None, kwargs=None, urlconf=None, current_app=None, attrs=None):
+    def __init__(self, text=None, viewname=None, args=None, kwargs=None, urlconf=None, current_app=None, attrs=None,
+                 cond_disable=None):
         self.basetext = text
         self.viewname = viewname
         self.args = args or []
@@ -42,6 +43,10 @@ class Link(object):
         self.urlconf = urlconf
         self.current_app = current_app
         self.base_attrs = attrs or {}
+        self.cond_disable = cond_disable or []
+
+    def visible(self, obj):
+        return True
 
     @property
     def text(self):
@@ -50,6 +55,28 @@ class Link(object):
         else:
             basetext = self.basetext
         return escape(basetext)
+
+    @property
+    def disabled(self):
+        for cond in self.cond_disable:
+            field = cond[0]
+            if isinstance(field, Accessor):
+                field = field.resolve(self.obj)
+
+            if len(cond) == 3:
+                cond_html = '{% if '
+                if cond[1] == False:
+                    cond_html += 'not '
+                return cond_html+field+' %} disabled{% endif %}'
+
+            if len(cond) > 1:
+                if isinstance(cond[1], bool):
+                    field = bool(field)
+                return field == cond[1]
+
+            return bool(field)
+
+        return False
 
     @property
     def url(self):
@@ -83,9 +110,16 @@ class Link(object):
     def attrs(self):
         if self.url:
             self.base_attrs["href"] = self.url
+
+        if self.disabled:
+            if isinstance(self.disabled, bool):
+                self.base_attrs['class'] += ' disabled'
+            else:
+                self.base_attrs['class'] += self.disabled
+
         return self.base_attrs
 
-    def render(self, obj):
+    def render(self, obj, field=None):
         """ Render link as HTML output tag <a>.
         """
         self.obj = obj
@@ -95,7 +129,11 @@ class Link(object):
             else '%s="%s"' % (attr_name, attr)
             for attr_name, attr in self.attrs.items()
         ])
-        return mark_safe(u'<a %s>%s</a>' % (attrs, self.text))
+        html = ('<a %s>%s</a>' % (attrs, self.text)) if self.text else ''
+        # html = '<a class="btn btn-primary">{{ perms.product.change_product }}</a>'
+        print(html)
+        template = Template(html)
+        return template.render(Context({}))
 
 
 class ImageLink(Link):

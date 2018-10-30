@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
+import django
+
+if django.VERSION >= (1, 10) and django.VERSION < (2, 1):
+    from django.urls import reverse
+elif django.VERSION >= (2, 1):
+    from django.urls import reverse_lazy as reverse
+else:
+    from django.core.urlresolvers import reverse
 
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -18,7 +26,7 @@ class ButtonColumn(Column):
         super(ButtonColumn, self).__init__(field, header, attrs, header_attrs, **kwargs)
 
     def render(self, obj):
-        return self.delimiter.join([button.render(obj, self.field) for button in self.buttons])
+        return self.delimiter.join([button.render(obj, self.field) for button in self.buttons if button.visible(obj)])
 
 
 class Button(object):
@@ -26,7 +34,7 @@ class Button(object):
     Represents a html <button> tag.
     """
     def __init__(self, text=None, viewname=None, args=None, kwargs=None, urlconf=None, current_app=None, attrs=None,
-                 modal_target=None):
+                 modal_target=None, onclick=None, cond_visible=None, cond_disable=None):
         self.basetext = text
         self.viewname = viewname
         self.args = args or []
@@ -35,7 +43,50 @@ class Button(object):
         self.current_app = current_app
         self.base_attrs = attrs or {}
         self.modal_target = modal_target
-        self.field = None
+        self.onclick = onclick
+        self.cond_visible = cond_visible or []
+        self.cond_disable = cond_disable or []
+
+    def visible(self, obj):
+        for cond in self.cond_visible:
+            field = cond[0]
+            if isinstance(field, Accessor):
+                field = field.resolve(obj)
+
+            if len(cond) > 1:
+                if isinstance(cond[1], bool):
+                    field = bool(field)
+                return field == cond[1]
+            return bool(field)
+        return True
+
+    @property
+    def url(self):
+        if self.viewname is None:
+            return ""
+
+        # The following params + if statements create optional arguments to
+        # pass to Django's reverse() function.
+        params = {}
+        if self.args:
+            params['args'] = [arg.resolve(self.obj)
+                              if isinstance(arg, Accessor) else arg
+                              for arg in self.args]
+        if self.kwargs:
+            params['kwargs'] = {}
+            for key, value in self.kwargs.items():
+                params['kwargs'][key] = (value.resolve(self.obj)
+                                         if isinstance(value, Accessor) else value)
+        if self.urlconf:
+            params['urlconf'] = (self.urlconf.resolve(self.obj)
+                                 if isinstance(self.urlconf, Accessor)
+                                 else self.urlconf)
+        if self.current_app:
+            params['current_app'] = (self.current_app.resolve(self.obj)
+                                     if isinstance(self.current_app, Accessor)
+                                     else self.current_app)
+
+        return reverse(self.viewname, **params)
 
     @property
     def text(self):
@@ -45,12 +96,36 @@ class Button(object):
             basetext = self.basetext
         return escape(basetext)
 
+    @property
+    def disabled(self):
+        for cond in self.cond_disable:
+            field = cond[0]
+            if isinstance(field, Accessor):
+                field = field.resolve(self.obj)
+
+            if len(cond) > 1:
+                if isinstance(cond[1], bool):
+                    field = bool(field)
+                return field == cond[1]
+            return bool(field)
+
+        return False
+
 
     @property
     def attrs(self):
         if self.modal_target and getattr(self.obj, self.field):
             self.base_attrs['data-toggle'] = 'modal'
             self.base_attrs['data-target'] = '#'+self.modal_target+'-'+str(getattr(self.obj, self.field))
+        if self.onclick:
+            self.base_attrs['onclick'] = f'{self.onclick}(\'{self.url}\')'
+
+        if self.disabled:
+            self.base_attrs['disabled'] = True
+        else:
+            if self.base_attrs.get('disabled'):
+                del self.base_attrs['disabled']
+
         return self.base_attrs
 
 
