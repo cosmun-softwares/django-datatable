@@ -5,10 +5,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-datatable',
-    version='0.3.1',
-    author='shymonk',
-    author_email='hellojohn201@gmail.com',
-    url='https://github.com/shymonk/django-datatable',
+    version='0.3.2',
+    author='cosmun softwares',
+    author_email='contato@cosmunsoftwares.com.br',
+    url='https://github.com/cosmun-softwares/django-datatable',
     description='A simple Django app to origanize data in tabular form.',
     long_description=open('README.rst').read(),
     packages=find_packages(exclude=['test*', 'example*']),
