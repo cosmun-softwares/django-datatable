@@ -9,3 +9,4 @@ from .checkboxcolumn import CheckboxColumn  # NOQA
 from .buttoncolumn import ButtonColumn, Button  # NOQA
 from .imagecolumn import ImageColumn
 from .imagesequencecolumn import ImageSequenceColumn
+from .boolcolumn import BoolColumn
