@@ -131,7 +131,6 @@ class Link(object):
         ])
         html = ('<a %s>%s</a>' % (attrs, self.text)) if self.text else ''
         # html = '<a class="btn btn-primary">{{ perms.product.change_product }}</a>'
-        print(html)
         template = Template(html)
         return template.render(Context({}))
 

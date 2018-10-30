@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 from django.utils.html import escape
+from django.template import Template, Context
 
 from table.utils import Accessor, AttributesDict
 
@@ -12,7 +13,7 @@ class Column(object):
     instance_order = 0
 
     def __init__(self, field=None, header=None, attrs=None, header_attrs=None, header_row_order=0, sortable=True,
-                 searchable=True, safe=True, visible=True, space=True, default='', delimiter=' '):
+                 searchable=True, safe=True, visible=True, space=True, default='', delimiter=' ', text=None):
         self.field = field
         self.attrs = attrs or {}
         self.sortable = sortable
@@ -22,6 +23,7 @@ class Column(object):
         self.space = space
         self.default = default
         self.delimiter = delimiter
+        self.base_text = text
         self.header = ColumnHeader(header, header_attrs, header_row_order)
 
         self.instance_order = Column.instance_order
@@ -30,9 +32,19 @@ class Column(object):
     def __str__(self):
         return self.header.text
 
+    @property
+    def text(self):
+        if isinstance(self.base_text, Accessor):
+            text = self.base_text.resolve(self.obj)
+        else:
+            text = Accessor(self.field).resolve(self.obj, self.delimiter)
+            text = escape(text)
+
+        return text
+
     def render(self, obj):
-        text = Accessor(self.field).resolve(obj, self.delimiter)
-        return escape(text) if text else self.default
+        self.obj = obj
+        return self.text if self.text else self.default
 
 
 class BoundColumn(object):
