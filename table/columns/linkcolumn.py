@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.template import Template, Context
 
-from table.utils import Accessor
+from table.utils import Accessor, check_condition
 from table.columns.base import Column
 
 
@@ -47,22 +47,13 @@ class Link(object):
         self.cond_visible = visible or []
 
     def visible(self, obj, user=None):
-        for cond in self.cond_visible:
-            field = cond[0]
-            if isinstance(field, Accessor):
-                field = field.resolve(self.obj)
+        return check_condition(self.cond_visible, obj, user)
 
-            if user and len(cond) == 3:
-                return user.has_perm(field)
-
-            if len(cond) > 1:
-                if isinstance(cond[1], bool):
-                    field = bool(field)
-                return field == cond[1]
-
-            return bool(field)
-
-        return True
+    @property
+    def disabled(self):
+        if self.cond_disable:
+            return check_condition(self.cond_disable, self.obj, self.user)
+        return False
 
     @property
     def text(self):
@@ -71,22 +62,6 @@ class Link(object):
         else:
             basetext = self.basetext
         return escape(basetext)
-
-    @property
-    def disabled(self):
-        for cond in self.cond_disable:
-            field = cond[0]
-            if isinstance(field, Accessor):
-                field = field.resolve(self.obj)
-
-            if len(cond) > 1:
-                if isinstance(cond[1], bool):
-                    field = bool(field)
-                return field == cond[1]
-
-            return bool(field)
-
-        return False
 
     @property
     def url(self):
@@ -122,10 +97,12 @@ class Link(object):
             self.base_attrs["href"] = self.url
 
         if self.disabled:
-            if isinstance(self.disabled, bool):
-                self.base_attrs['class'] += ' disabled'
-            else:
-                self.base_attrs['class'] += self.disabled
+            if not self.base_attrs.get('class'):
+                self.base_attrs['class'] = ''
+            self.base_attrs['class'] += ' disabled'
+        else:
+            if self.base_attrs.get('class'):
+                self.base_attrs.get('class').replace('disabled', '')
 
         return self.base_attrs
 
@@ -133,6 +110,7 @@ class Link(object):
         """ Render link as HTML output tag <a>.
         """
         self.obj = obj
+        self.user = user
         attrs = ' '.join([
             '%s="%s"' % (attr_name, attr.resolve(obj))
             if isinstance(attr, Accessor)

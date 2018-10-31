@@ -12,7 +12,7 @@ else:
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from table.utils import Accessor
+from table.utils import Accessor, check_condition
 from table.columns.base import Column
 
 
@@ -27,7 +27,7 @@ class ButtonColumn(Column):
 
     def render(self, obj, user=None):
         return self.delimiter.join([
-            button.render(obj, field=self.field)
+            button.render(obj, field=self.field, user=user)
             for button in self.buttons if button.visible(obj, user=user)
         ])
 
@@ -51,27 +51,13 @@ class Button(object):
         self.cond_disable = disable or []
 
     def visible(self, obj, user=None):
-        for cond in self.cond_visible:
-            field = cond[0]
-            if isinstance(field, Accessor):
-                field = field.resolve(obj)
+        return check_condition(self.cond_visible, obj, user)
 
-            if user and len(cond) == 3:
-                if cond[2] == 'perm':
-                    if cond[2] is False:
-                        return not user.has_perm(field)
-                    return user.has_perm(field)
-                elif cond[2] == 'user':
-                    if cond[2] is False:
-                        return not getattr(user, cond[1]) == cond[2]
-                    return getattr(user, cond[1]) == cond[2]
-
-            if len(cond) > 1:
-                if isinstance(cond[1], bool):
-                    field = bool(field)
-                return field == cond[1]
-            return bool(field)
-        return True
+    @property
+    def disabled(self):
+        if self.cond_disable:
+            return check_condition(self.cond_disable, self.obj, self.user)
+        return False
 
     @property
     def url(self):
@@ -110,22 +96,6 @@ class Button(object):
         return escape(basetext)
 
     @property
-    def disabled(self):
-        for cond in self.cond_disable:
-            field = cond[0]
-            if isinstance(field, Accessor):
-                field = field.resolve(self.obj)
-
-            if len(cond) > 1:
-                if isinstance(cond[1], bool):
-                    field = bool(field)
-                return field == cond[1]
-            return bool(field)
-
-        return False
-
-
-    @property
     def attrs(self):
         if self.modal_target and getattr(self.obj, self.field):
             self.base_attrs['data-toggle'] = 'modal'
@@ -146,6 +116,7 @@ class Button(object):
         """ Render link as HTML output tag <button>.
         """
         self.obj = obj
+        self.user = user
         if field:
             self.field = field
         attrs = ' '.join([

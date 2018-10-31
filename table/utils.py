@@ -134,3 +134,55 @@ def load_class(full_class_string):
 
     # Finally, we retrieve the Class
     return getattr(module, class_str)
+
+
+def check_condition(object_list, obj, user):
+
+    object_list = object_list or []
+    results = []
+
+    for cond in object_list:
+        if cond.get('type_cond'):
+            results.append(cond.get('type_cond'))
+            break
+        obj_1 = cond.get('obj_1')
+        obj_2 = cond.get('obj_2')
+        field_1 = obj_1.get('field')
+        field_2 = obj_2.get('field')
+        if isinstance(field_1, Accessor) and not obj_1.get('type'):
+            field_1 = field_1.resolve(obj)
+        if isinstance(field_2, Accessor) and not obj_2.get('type'):
+            field_2 = field_2.resolve(obj)
+
+        results.append(check_type(cond, user, obj_1, obj_2, field_1, field_2))
+
+    if 'or' in results:
+        return True if True in results else False
+    else:
+        return False if False in results else True
+
+
+def check_type(cond, user, obj_1, obj_2, field_1, field_2):
+
+    if obj_1.get('type') == 'perm':
+        if cond.get('cond') and cond.get('cond') == 'not':
+            return user.has_perm(field_1) != field_2
+        else:
+            return user.has_perm(field_1) == field_2
+    elif obj_1.get('type') == 'user':
+        if cond.get('cond') and cond.get('cond') == 'not':
+            return Accessor(field_1).resolve(user) != field_2
+        else:
+            return Accessor(field_1).resolve(user) == field_2
+    if obj_2.get('type') == 'perm':
+        if cond.get('cond') and cond.get('cond') == 'not':
+            return user.has_perm(field_2) != field_1
+        else:
+            return user.has_perm(field_2) == field_1
+    elif obj_2.get('type') == 'user':
+        if cond.get('cond') and cond.get('cond') == 'not':
+            return Accessor(field_2).resolve(user) != field_1
+        else:
+            return Accessor(field_2).resolve(user) == field_1
+
+    return bool(field_1) == field_2
