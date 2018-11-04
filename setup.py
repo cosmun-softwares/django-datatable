@@ -14,7 +14,7 @@ setup(
     packages=find_packages(exclude=['test*', 'example*']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=["django>=2.1"],
+    install_requires=["django==2.1"],
     license='MIT License',
     classifiers=[
         'Development Status :: 3 - Alpha',
