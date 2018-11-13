@@ -26,7 +26,7 @@ class LinkColumn(Column):
         super(LinkColumn, self).__init__(field, header, default=default, **kwargs)
 
     def render(self, obj, user=None):
-        text = self.delimiter.join([link.render(obj) for link in self.links])
+        text = self.delimiter.join([link.render(obj) for link in self.links if link.visible(obj, user=user)])
         return text if text else self.default
 
 
