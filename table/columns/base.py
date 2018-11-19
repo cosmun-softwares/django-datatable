@@ -68,9 +68,8 @@ class BoundColumn(object):
         self.visible = column.visible
         self.header = column.header
 
-    @property
-    def html(self):
-        text = self.column.render(self.obj)
+    def html(self, user=None):
+        text = self.column.render(self.obj, user)
         if text is None:
             return ''
         else:

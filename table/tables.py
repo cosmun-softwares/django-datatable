@@ -13,7 +13,8 @@ from table.columns import Column, BoundColumn, SequenceColumn
 
 class BaseTable(object):
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, user=None):
+        self.user = user
         self.data = TableData(data, self)
 
         # Make a copy so that modifying this will not touch the class definition.
@@ -32,7 +33,7 @@ class BaseTable(object):
             row = OrderedDict()
             columns = [BoundColumn(obj, col) for col in self.columns if col.space]
             for col in columns:
-                row[col] = col.html
+                row[col] = col.html(user=self.user)
             rows.append(row)
         return rows
 
